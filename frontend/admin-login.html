@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
+<title>Unnati Career Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="glass.css">
+<style>
+:root {
+  --accent: hsl(0,72%,60%);
+  --accent-glow: rgba(248,113,113,0.3);
+  --accent-soft: rgba(248,113,113,0.12);
+}
+body { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+.scene__blob--1 { background: radial-gradient(circle, hsl(0,65%,40%), transparent 70%); }
+.scene__blob--2 { background: radial-gradient(circle, hsl(265,60%,35%), transparent 70%); }
+.page { position:relative; z-index:1; width:100%; max-width:380px; }
+
+.card {
+  padding: 38px 32px;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(248,113,113,0.18);
+  border-top: 2px solid rgba(248,113,113,0.4);
+  border-radius: var(--r-xl);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.08) inset;
+  position: relative; overflow: hidden;
+}
+.card::before {
+  content:''; position:absolute; top:-80px; right:-80px;
+  width:220px; height:220px;
+  background: radial-gradient(circle, rgba(248,113,113,0.08), transparent 65%);
+  border-radius:50%; pointer-events:none;
+}
+
+.card-header { text-align:center; margin-bottom:28px; position:relative; z-index:1; }
+.lock-icon { font-size:38px; margin-bottom:14px; animation:pulse-lock 3s ease-in-out infinite; }
+@keyframes pulse-lock { 0%,100%{transform:scale(1);} 50%{transform:scale(1.07);} }
+.restrict-badge {
+  display:inline-block; padding:4px 12px;
+  background: rgba(248,113,113,0.12);
+  border: 1px solid rgba(248,113,113,0.25);
+  border-radius:50px;
+  font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:2px;
+  color:hsl(0,72%,65%); margin-bottom:14px;
+}
+.card-title { font-family:var(--font-display); font-size:22px; font-weight:800; margin-bottom:5px; }
+.card-sub   { font-size:11px; color:var(--text-3); }
+
+.attempts-bar { height:2px; background:rgba(255,255,255,0.06); border-radius:1px; margin-bottom:18px; overflow:hidden; }
+.attempts-fill { height:100%; width:0%; background:hsl(0,72%,60%); border-radius:1px; transition:width 0.4s; }
+
+.fi-shake { animation: shake 0.4s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-6px);} 40%,80%{transform:translateX(6px);} }
+
+.login-btn {
+  width:100%; padding:13px;
+  background: linear-gradient(135deg, hsl(0,72%,52%), hsl(0,60%,40%));
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius:50px;
+  font-size:14px; font-weight:700; color:#fff;
+  cursor:pointer; font-family:var(--font);
+  box-shadow: 0 4px 20px rgba(248,113,113,0.3);
+  transition: all var(--dur) var(--ease);
+  letter-spacing:0.5px;
+}
+.login-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 30px rgba(248,113,113,0.4); filter:brightness(1.08); }
+.login-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+.warn-text { text-align:center; margin-top:16px; font-size:10px; color:rgba(255,255,255,0.15); letter-spacing:0.5px; }
+
+.lockout-screen { text-align:center; padding:16px 0; display:none; }
+.lockout-icon   { font-size:40px; margin-bottom:12px; }
+.lockout-title  { font-family:var(--font-display); font-size:18px; font-weight:800; color:hsl(0,72%,60%); margin-bottom:8px; }
+.lockout-timer  { font-size:32px; font-weight:800; color:hsl(0,72%,60%); margin:12px 0; font-variant-numeric:tabular-nums; }
+.lockout-msg    { font-size:12px; color:var(--text-3); line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="scene" aria-hidden="true">
+  <div class="scene__blob scene__blob--1"></div>
+  <div class="scene__blob scene__blob--2"></div>
+  <div class="scene__blob scene__blob--3"></div>
+</div>
+<div id="toastContainer"></div>
+<div class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="lock-icon" id="lockIcon">🔐</div>
+      <div class="restrict-badge">⚡ Restricted Access</div>
+      <div class="card-title">System Login</div>
+      <div class="card-sub">Authorised personnel only</div>
+    </div>
+
+    <div class="attempts-bar"><div class="attempts-fill" id="attemptsFill"></div></div>
+
+    <div id="loginForm">
+      <div class="field">
+        <label class="field-label">Identifier</label>
+        <input class="field-input" type="email" id="aEmail" placeholder="Enter email" autocomplete="off" spellcheck="false">
+        <div class="field-err" id="e1">Required.</div>
+      </div>
+      <div class="field">
+        <label class="field-label">Access Key</label>
+        <input class="field-input" type="password" id="aPass" placeholder="••••••••••••" autocomplete="new-password">
+        <div class="field-err" id="e2">Required.</div>
+      </div>
+      <div class="gen-err" id="aErr"></div>
+      <button class="login-btn" id="loginBtn" onclick="doAdminLogin()">Authenticate →</button>
+    </div>
+
+    <div class="lockout-screen" id="lockoutScreen">
+      <div class="lockout-icon">🚫</div>
+      <div class="lockout-title">Access Suspended</div>
+      <div class="lockout-timer" id="lockTimer">5:00</div>
+      <div class="lockout-msg">Too many failed attempts.<br>Please wait before trying again.</div>
+    </div>
+
+    <div class="warn-text">All access attempts are logged</div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+'use strict';
+const MAX_ATTEMPTS=5, LOCKOUT_SECS=300, PFX='_sys_';
+let attempts=parseInt(sessionStorage.getItem(PFX+'att')||'0');
+let lockedUntil=parseInt(sessionStorage.getItem(PFX+'lk')||'0');
+let lockTimerInterval=null;
+(function init(){
+  if(lockedUntil&&Date.now()<lockedUntil){showLockout();}
+  else if(lockedUntil&&Date.now()>=lockedUntil){attempts=0;sessionStorage.removeItem(PFX+'att');sessionStorage.removeItem(PFX+'lk');}
+  updateBar();
+})();
+async function doAdminLogin(){
+  if(lockedUntil&&Date.now()<lockedUntil){showLockout();return;}
+  const email=document.getElementById('aEmail').value.trim();
+  const pass=document.getElementById('aPass').value.trim();
+  let ok=true;
+  if(!email){showE('e1');ok=false;}else hideE('e1');
+  if(!pass){showE('e2');ok=false;}else hideE('e2');
+  if(!ok)return;
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;btn.textContent='Verifying…';
+  await new Promise(r=>setTimeout(r,600+Math.random()*400));
+  try{
+    const res=await Auth.adminLogin(email,pass);
+    setToken(res.access_token);
+    setSession({id:0,name:'Admin',role:'admin'});
+    attempts=0;sessionStorage.removeItem(PFX+'att');sessionStorage.removeItem(PFX+'lk');
+    document.getElementById('lockIcon').textContent='✅';
+    btn.textContent='Access Granted';
+    btn.style.background='linear-gradient(135deg,hsl(152,69%,40%),hsl(152,60%,30%))';
+    setTimeout(()=>window.location.href='app.html',700);
+  }catch(err){
+    attempts++;sessionStorage.setItem(PFX+'att',attempts);updateBar();
+    ['aEmail','aPass'].forEach(id=>{const el=document.getElementById(id);el.classList.remove('fi-shake');void el.offsetWidth;el.classList.add('fi-shake');});
+    document.getElementById('aPass').value='';
+    if(attempts>=MAX_ATTEMPTS){
+      lockedUntil=Date.now()+LOCKOUT_SECS*1000;sessionStorage.setItem(PFX+'lk',lockedUntil);showLockout();
+    }else{
+      const rem=MAX_ATTEMPTS-attempts;
+      showGE('aErr',rem===1?'⚠️ Invalid. 1 attempt remaining before lockout.':`Invalid credentials. ${rem} attempts remaining.`);
+      btn.disabled=false;btn.textContent='Authenticate →';
+    }
+  }
+}
+function updateBar(){ document.getElementById('attemptsFill').style.width=(attempts/MAX_ATTEMPTS*100)+'%'; }
+function showLockout(){
+  document.getElementById('loginForm').style.display='none';
+  document.getElementById('lockoutScreen').style.display='block';
+  document.getElementById('lockIcon').textContent='🚫';
+  if(lockTimerInterval)clearInterval(lockTimerInterval);
+  lockTimerInterval=setInterval(()=>{
+    const rem=Math.max(0,lockedUntil-Date.now());
+    if(rem<=0){clearInterval(lockTimerInterval);attempts=0;lockedUntil=0;sessionStorage.removeItem(PFX+'att');sessionStorage.removeItem(PFX+'lk');document.getElementById('lockoutScreen').style.display='none';document.getElementById('loginForm').style.display='block';document.getElementById('lockIcon').textContent='🔐';updateBar();return;}
+    const m=Math.floor(rem/60000),s=Math.floor((rem%60000)/1000);
+    document.getElementById('lockTimer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+  },500);
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginForm').style.display!=='none')doAdminLogin();});
+document.addEventListener('contextmenu',e=>e.preventDefault());
+</script>
+</body>
+</html>
