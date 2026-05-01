@@ -7,3 +7,4 @@ pydantic[email]==2.7.1
 pydantic-settings==2.2.1
 python-multipart==0.0.9
 email-validator
+psycopg2-binary==2.9.9
