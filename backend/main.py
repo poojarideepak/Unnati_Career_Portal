@@ -11,6 +11,24 @@ from database import engine, Base
 from routers import auth, students, companies, jobs, applications, notifications, stats, admin, external, scholarships
 
 Base.metadata.create_all(bind=engine)
+# Ensure profile_photo column exists
+from sqlalchemy import text
+with engine.connect() as conn:
+    try:
+        conn.execute(text("ALTER TABLE students ADD COLUMN profile_photo VARCHAR(200) AFTER is_placed"))
+        conn.commit()
+    except Exception:
+        pass # Already exists or other error
+
+# Ensure profile_photo column exists
+from sqlalchemy import text
+with engine.connect() as conn:
+    try:
+        conn.execute(text("ALTER TABLE students ADD COLUMN profile_photo VARCHAR(200) AFTER is_placed"))
+        conn.commit()
+    except Exception:
+        pass # Already exists or other error
+
 
 app = FastAPI(title="Unnati Career Portal API", version="1.0.0", docs_url="/docs")
 

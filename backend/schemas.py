@@ -37,6 +37,7 @@ class StudentUpdate(BaseModel):
     phone: Optional[str] = None
     cgpa: Optional[float] = Field(None, ge=0, le=10)
     skills: Optional[str] = None
+    profile_photo: Optional[str] = None
 
 class StudentOut(BaseModel):
     id: int
@@ -50,6 +51,7 @@ class StudentOut(BaseModel):
     resume: Optional[str]
     batch: int
     is_placed: bool
+    profile_photo: Optional[str] = None
     created_at: Optional[datetime]
     class Config: from_attributes = True
 

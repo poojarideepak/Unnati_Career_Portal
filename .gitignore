@@ -32,3 +32,10 @@ build/
 .vscode/
 *.swp
 *.swo
+
+# Uploads
+backend/uploads/
+
+# Debug/test scripts
+backend/check_db.py
+backend/test_db_conn.py

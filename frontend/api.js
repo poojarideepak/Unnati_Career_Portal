@@ -50,6 +50,11 @@ const Students = {
     fd.append('file', file);
     return api('POST', '/api/students/me/resume', fd, true);
   },
+  uploadPhoto: (file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return api('POST', '/api/students/me/photo', fd, true);
+  },
   list:    (params = {}) => api('GET', '/api/students/?' + new URLSearchParams(params)),
   getById: (id)          => api('GET', `/api/students/${id}`),
   delete:  (id)          => api('DELETE', `/api/students/${id}`),
@@ -112,6 +117,37 @@ const Admin = {
   addForm:        (data) => api('POST', '/api/admin/interview-forms', data),
   deleteForm:     (id)   => api('DELETE', `/api/admin/interview-forms/${id}`),
   broadcast:      (data) => api('POST', '/api/admin/broadcast', data),
+  downloadReport: async (formId, jobTitle = 'report') => {
+    const token = getToken();
+    const res = await fetch(`/api/admin/interview-forms/${formId}/report`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    });
+    if (!res.ok) { const d = await res.json().catch(()=>({})); throw new Error(d.detail || 'Failed to download report'); }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `Applicants_${jobTitle.replace(/\s+/g,'_')}.xlsx`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
+  downloadApplicantsReport: async (params = {}) => {
+    const token = getToken();
+    const query = new URLSearchParams(params).toString();
+    const res = await fetch(`/api/admin/applicants/report?${query}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    });
+    if (!res.ok) { const d = await res.json().catch(()=>({})); throw new Error(d.detail || 'Failed to download report'); }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `Applicants_Report_${today().replace(/-/g,'')}.xlsx`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
 };
 
 /* ── INSIGHTS & EXTERNAL ─────────────────────────────── */

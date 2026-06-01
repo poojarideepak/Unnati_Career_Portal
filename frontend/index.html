@@ -290,13 +290,12 @@
     }
 
     .chart-container-premium {
-      padding: 20px;
+      padding: 16px;
       background: rgba(8, 10, 20, 0.4);
       border: 1px solid var(--glass-border);
       border-radius: var(--r-xl);
-      height: 320px;
+      height: 380px;
       position: relative;
-      overflow: hidden;
     }
 
     .chart-header-premium {
@@ -330,7 +329,7 @@
   <div class="page">
     <nav class="topnav">
       <div class="logo" style="gap: 14px;">
-        <div class="logo-mark" style="background:linear-gradient(135deg, #8b0000, #ff4500);">H</div>
+        <img src="assets/college_logo.png" alt="Logo" style="width:50px;height:50px;object-fit:contain;">
         <div>
           <div class="logo-text" style="font-size:18px;">Dr. B.B. Hegde First Grade College</div>
           <div class="logo-tag">Unnati Career Portal • A Unit of Coondapur Education Society(R)</div>
@@ -464,7 +463,12 @@
             labels: (stats.yearly_placements || []).map(d => d.year),
             datasets: [{ data: (stats.yearly_placements || []).map(d => d.count), backgroundColor: '#A78BFA', borderRadius: 6 }]
           },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { legend: { display: false } },
+            layout: { padding: { bottom: 10, left: 5, right: 5 } }
+          }
         });
 
         _dc('chartBranchDist');
@@ -474,7 +478,13 @@
             labels: (stats.branch_stats || []).map(d => d.course),
             datasets: [{ data: (stats.branch_stats || []).map(d => d.placed), backgroundColor: ['#A78BFA', '#34D399', '#FBBF24', '#60A5FA'], borderWidth: 0 }]
           },
-          options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            cutout: '70%', 
+            plugins: { legend: { position: 'bottom', labels: { padding: 15, boxWidth: 12 } } },
+            layout: { padding: { bottom: 20 } }
+          }
         });
 
         _dc('chartPkgDist');
@@ -484,7 +494,12 @@
             labels: (stats.package_distribution || []).map(d => d.range + ' LPA'),
             datasets: [{ data: (stats.package_distribution || []).map(d => d.count), backgroundColor: '#34D399', borderRadius: 6 }]
           },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { legend: { display: false } },
+            layout: { padding: { bottom: 10, left: 5, right: 5 } }
+          }
         });
 
         _dc('chartTrend');
@@ -497,7 +512,12 @@
               borderColor: '#FBBF24', backgroundColor: 'rgba(251,191,36,0.1)', fill: true, tension: 0.4
             }]
           },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { legend: { display: false } },
+            layout: { padding: { bottom: 10, left: 5, right: 5 } }
+          }
         });
 
       } catch (err) {

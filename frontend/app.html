@@ -27,18 +27,23 @@
       display: grid;
       grid-template-columns: 280px 1fr;
       gap: 0;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
     }
 
     @media (max-width: 900px) {
       main {
         grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
       }
     }
 
     /* ── SIDEBAR ────────────────────────────────────────────── */
     .sidebar {
       width: 280px;
+      min-width: 280px;
+      flex-shrink: 0;
       min-height: 100vh;
       padding: 20px 16px;
       background: rgba(255, 255, 255, 0.04);
@@ -73,18 +78,10 @@
       margin-bottom: 20px;
     }
 
-    .sidebar-logo-mark {
-      width: 34px;
-      height: 34px;
-      border-radius: 9px;
-      background: linear-gradient(135deg, var(--accent), hsl(30, 95%, 60%));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 17px;
-      font-weight: 900;
-      color: #000;
-      box-shadow: 0 4px 14px var(--accent-glow);
+    .sidebar-logo img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
     }
 
     .sidebar-logo-text {
@@ -115,6 +112,13 @@
       color: #000;
       margin-bottom: 10px;
       box-shadow: 0 4px 16px var(--accent-glow);
+      overflow: hidden;
+    }
+
+    .user-av img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .user-name {
@@ -272,7 +276,15 @@
     .main-content {
       flex: 1;
       padding: 24px;
+      height: 100vh;
       overflow-y: auto;
+    }
+
+    @media (max-width: 900px) {
+      .main-content {
+        height: auto;
+        overflow: visible;
+      }
     }
 
     article {
@@ -702,12 +714,10 @@
     <nav
       style="display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(255,255,255,0.06);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.18);border-radius:32px;margin:20px 20px 0;flex-wrap:wrap;gap:12px;position:sticky;top:12px;z-index:100;">
       <div style="display:flex;align-items:center;gap:10px;">
-        <div
-          style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,hsl(43,96%,56%),hsl(30,95%,60%));display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;color:#000;box-shadow:0 4px 14px rgba(251,191,36,0.3);">
-          P</div>
+        <img src="assets/college_logo.png" alt="Logo" style="width:40px;height:40px;object-fit:contain;">
         <div>
-          <div style="font-family:var(--font-display);font-size:18px;font-weight:800;">Unnati Career Portal</div>
-          <div style="font-size:10px;color:var(--text-3);">College Placement Portal</div>
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:800;">Dr. B.B. Hegde College</div>
+          <div style="font-size:10px;color:var(--text-3);">Unnati Career Portal</div>
         </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -1061,6 +1071,7 @@
                     <th>CGPA</th>
                     <th>Skills</th>
                     <th>Apps</th>
+                    <th>Resume</th>
                     <th>Placed</th>
                   </tr>
                 </thead>
@@ -1101,6 +1112,7 @@
               <option value="BBA">BBA</option>
               <option value="BCA">BCA</option>
             </select>
+            <button class="btn-accent btn-sm" onclick="downloadApplicantsReport()" style="margin-left:auto;">📥 Download Report</button>
           </div>
           <div id="adminApplicantsList"></div>
         </article>
@@ -1339,10 +1351,20 @@
     </div>
   </div>
 
+  <!-- Student Detail Modal -->
+  <div class="modal-overlay" id="studentDetailModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>👤 Student Profile</h3><span class="modal-close" onclick="closeModal('studentDetailModal')">✕</span>
+      </div>
+      <div id="studentDetailBody"></div>
+    </div>
+  </div>
+
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="api.js"></script>
+  <script src="api.js?v=1.0.1"></script>
   <script>
     'use strict';
 
@@ -1386,7 +1408,12 @@
     function buildSidebar() {
       document.getElementById('sideName').textContent = cRole === 'admin' ? 'Administrator' : (cUser?.name || _sess.name);
       document.getElementById('sideRole').textContent = cRole === 'admin' ? 'System Admin' : (cUser?.course || '') + ' · ' + (cUser?.roll_no || '');
-      document.getElementById('sideAvatar').textContent = cRole === 'admin' ? 'AD' : initials(cUser?.name || _sess.name);
+      const av = document.getElementById('sideAvatar');
+      if (cRole === 'student' && cUser?.profile_photo) {
+        av.innerHTML = `<img src="/uploads/photos/${cUser.profile_photo}" alt="Profile">`;
+      } else {
+        av.innerHTML = cRole === 'admin' ? 'AD' : initials(cUser?.name || _sess.name);
+      }
       const c = document.getElementById('sideContacts');
       if (cRole === 'student' && cUser) {
         c.innerHTML = [
@@ -1462,10 +1489,15 @@
 
     /* ── STUDENT: DASHBOARD ──────────────────────────────────── */
     async function renderStudentDashboard() {
-      document.getElementById('dashAv').textContent = initials(cUser?.name || _sess.name);
+      const av = document.getElementById('dashAv');
+      if (cUser?.profile_photo) {
+        av.innerHTML = `<img src="/uploads/photos/${cUser.profile_photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        av.textContent = initials(cUser?.name || _sess.name);
+      }
       document.getElementById('dashName').textContent = cUser?.name || _sess.name;
       document.getElementById('dashMeta').innerHTML = cUser
-        ? `📚 ${cUser.course} &nbsp;·&nbsp; 🎓 CGPA: ${cUser.cgpa} &nbsp;·&nbsp; 🪪 Roll: ${cUser.roll_no}<br>🛠️ ${cUser.skills || 'No skills listed'} &nbsp;·&nbsp; 📄 ${cUser.resume || 'No resume'}`
+        ? `📚 ${cUser.course} &nbsp;·&nbsp; 🎓 CGPA: ${cUser.cgpa} &nbsp;·&nbsp; 🪪 Roll: ${cUser.roll_no}<br>🛠️ ${cUser.skills || 'No skills listed'} &nbsp;·&nbsp; 📄 ${cUser.resume ? `<a href="/uploads/resumes/${cUser.resume}" target="_blank" style="color:var(--accent);text-decoration:underline;">View Resume</a>` : 'No resume'}`
         : 'Loading…';
       try {
         const [apps, pred] = await Promise.all([Applications.myApps(), Stats.predict()]);
@@ -1602,11 +1634,14 @@
     async function renderProfile() {
       const s = cUser; if (!s) return;
       const apps = await Applications.myApps().catch(() => []);
+      const avHtml = s.profile_photo 
+        ? `<img src="/uploads/photos/${s.profile_photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+        : initials(s.name);
       document.getElementById('profileContent').innerHTML = `
     <div class="profile-banner">
-      <div class="profile-av">${initials(s.name)}</div>
+      <div class="profile-av">${avHtml}</div>
       <div><div class="profile-name">${s.name}</div>
-      <div class="profile-meta">✉️ ${s.email}<br>📞 ${s.phone || '—'}<br>📚 ${s.course} · CGPA ${s.cgpa}<br>🪪 ${s.roll_no} | Batch ${s.batch}<br>🛠️ ${s.skills || '—'}<br>📄 ${s.resume || 'Not uploaded'}<br>🏆 ${s.is_placed ? '<span style="color:var(--green);font-weight:700;">✅ Placed</span>' : '<span style="color:var(--accent);">🔍 Seeking</span>'}</div></div>
+      <div class="profile-meta">✉️ ${s.email}<br>📞 ${s.phone || '—'}<br>📚 ${s.course} · CGPA ${s.cgpa}<br>🪪 ${s.roll_no} | Batch ${s.batch}<br>🛠️ ${s.skills || '—'}<br>📄 ${s.resume ? `<a href="/uploads/resumes/${s.resume}" target="_blank" style="color:var(--accent);text-decoration:underline;font-weight:600;">📎 View My Resume</a>` : '<span style="color:var(--text-3);">Not uploaded yet</span>'}<br>🏆 ${s.is_placed ? '<span style="color:var(--green);font-weight:700;">✅ Placed</span>' : '<span style="color:var(--accent);">🔍 Seeking</span>'}</div></div>
     </div>
     <div class="stat-list" style="margin-bottom:20px;">
       <div class="stat-card"><div class="stat-num yellow-text">${apps.length}</div><div class="stat-label">Applied</div></div>
@@ -1621,8 +1656,9 @@
         <div class="field"><label class="field-label">Phone</label><input class="field-input" id="epPhone" value="${s.phone || ''}"></div>
         <div class="field"><label class="field-label">CGPA</label><input class="field-input" type="number" id="epCgpa" value="${s.cgpa}" min="0" max="10" step="0.1"></div>
         <div class="field"><label class="field-label">Skills</label><input class="field-input" id="epSkills" value="${s.skills || ''}"></div>
+        <div class="field"><label class="field-label">Profile Photo</label><input class="field-input" type="file" id="epPhoto" accept="image/*" style="padding:8px;"></div>
+        <div class="field"><label class="field-label">Resume (PDF)</label><input class="field-input" type="file" id="epResume" accept=".pdf" style="padding:8px;"></div>
       </div>
-      <div class="field"><label class="field-label">Resume (PDF)</label><input class="field-input" type="file" id="epResume" accept=".pdf" style="padding:8px;"></div>
       <button class="btn-accent" style="margin-top:10px;" onclick="saveProfile()">Save Profile →</button>
     </div>`;
     }
@@ -1636,6 +1672,8 @@
       try {
         cUser = await Students.updateMe(data);
         const rf = document.getElementById('epResume').files[0];
+        const pf = document.getElementById('epPhoto').files[0];
+        if (pf) { await Students.uploadPhoto(pf); cUser = await Students.me(); }
         if (rf) { await Students.uploadResume(rf); cUser = await Students.me(); }
         buildSidebar(); toast('Profile updated! ✅', 'success'); renderProfile();
       } catch (err) { toast(err.message, 'error'); }
@@ -1646,7 +1684,10 @@
       try {
         const forms = await Admin.interviewForms(), myApps = await Applications.myApps();
         const myJobIds = myApps.map(a => a.job_id);
-        const relevant = forms.filter(f => myJobIds.includes(f.job_id));
+        const relevant = forms.filter(f => {
+          const app = myApps.find(a => a.job_id === f.job_id);
+          return app && (app.status === 'Applied' || app.status === 'Shortlisted' || app.status === 'Selected');
+        });
         const [jobs, companies] = await Promise.all([Jobs.list(), Companies.list()]);
         document.getElementById('studentInterviewForms').innerHTML = relevant.length
           ? relevant.map(f => {
@@ -1747,9 +1788,51 @@
         const students = await Students.list(params), apps = await Applications.all();
         document.getElementById('adminStuBody').innerHTML = students.map(s => {
           const cnt = apps.filter(a => a.student_id === s.id).length;
-          return `<tr><td style="font-weight:700;color:var(--text-1);">${s.name}</td><td style="color:var(--text-3);">${s.roll_no}</td><td>${s.course}</td><td>${s.cgpa}</td><td style="font-size:11px;max-width:120px;">${s.skills || '—'}</td><td>${cnt}</td><td>${s.is_placed ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-gray">No</span>'}</td></tr>`;
+          const resumeLink = s.resume
+            ? `<a href="/uploads/resumes/${s.resume}" target="_blank" title="View PDF" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-size:12px;">📄 View</a>`
+            : `<span style="color:var(--text-3);font-size:11px;">—</span>`;
+          return `<tr onclick="showStudentDetail(${s.id})" style="cursor:pointer;"><td style="font-weight:700;color:var(--text-1);">${s.name}</td><td style="color:var(--text-3);">${s.roll_no}</td><td>${s.course}</td><td>${s.cgpa}</td><td style="font-size:11px;max-width:120px;">${s.skills || '—'}</td><td>${cnt}</td><td>${resumeLink}</td><td>${s.is_placed ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-gray">No</span>'}</td></tr>`;
         }).join('');
       } catch { toast('Failed to load students.', 'error'); }
+    }
+
+    async function showStudentDetail(id) {
+      try {
+        const s = await Students.getById(id);
+        const apps = await Applications.all({ student_id: id });
+        const avHtml = s.profile_photo 
+          ? `<img src="/uploads/photos/${s.profile_photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+          : initials(s.name);
+        
+        document.getElementById('studentDetailBody').innerHTML = `
+          <div class="profile-banner" style="margin-bottom:20px;">
+            <div class="profile-av">${avHtml}</div>
+            <div>
+              <div class="profile-name">${s.name}</div>
+              <div class="profile-meta">
+                ✉️ ${s.email}<br>📞 ${s.phone || '—'}<br>
+                📚 ${s.course} · CGPA ${s.cgpa}<br>
+                🪪 ${s.roll_no} | Batch ${s.batch}<br>
+                🛠️ ${s.skills || '—'}<br>
+                📄 ${s.resume ? `<a href="/uploads/resumes/${s.resume}" target="_blank" style="color:var(--accent);text-decoration:underline;">View Resume</a>` : 'No resume'}
+              </div>
+            </div>
+          </div>
+          <div class="section-block">
+            <div class="section-title">Applications (${apps.length})</div>
+            <div class="table-wrap">
+              <table class="glass-table">
+                <thead><tr><th>Job</th><th>Applied</th><th>Status</th></tr></thead>
+                <tbody>
+                  ${apps.map(a => `<tr><td>${a.job?.title} at ${a.job?.company?.name}</td><td>${a.applied_on}</td><td>${statusBadge(a.status)}</td></tr>`).join('')}
+                  ${apps.length === 0 ? '<tr><td colspan="3" style="text-align:center;padding:12px;color:var(--text-3);">No applications yet.</td></tr>' : ''}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        openModal('studentDetailModal');
+      } catch (err) { toast('Error loading details', 'error'); }
     }
 
     /* ── ADMIN: JOBS ─────────────────────────────────────────── */
@@ -1859,6 +1942,24 @@
       try { await Applications.updateStatus(id, status); toast(`Applicant ${status}!`, status === 'Rejected' ? 'error' : 'success'); renderAdminApplicants(); } catch (err) { toast(err.message, 'error'); }
     }
 
+    async function downloadApplicantsReport() {
+      const jf = document.getElementById('appJobFilter')?.value,
+            sf = document.getElementById('appStatusFilter')?.value,
+            cf = document.getElementById('appCourseFilter')?.value;
+      const params = {};
+      if (jf) params.job_id = jf;
+      if (sf) params.status = sf;
+      if (cf) params.course = cf;
+      
+      try {
+        toast('Generating report...', 'info');
+        await Admin.downloadApplicantsReport(params);
+        toast('Report downloaded! 📊', 'success');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    }
+
     /* ── ADMIN: COMPANIES ────────────────────────────────────── */
     async function renderAdminCompanies() {
       try {
@@ -1889,7 +1990,7 @@
         if (sel1) sel1.innerHTML = '<option value="">Select job</option>' + jobs.map(j => `<option value="${j.id}">${j.title}</option>`).join('');
         if (sel2) sel2.innerHTML = '<option value="">Select company</option>' + cos.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         document.getElementById('adminInterviewFormsList').innerHTML = forms.length
-          ? forms.map(f => { const j = jobs.find(x => x.id === f.job_id), c = cos.find(x => x.id === f.company_id); return `<div class="job-card"><div class="job-company">${c?.name || '—'}</div><div class="job-title">📝 ${j?.title || 'Job'} — Interview Form</div><div class="job-desc">${f.note || ''}</div><div class="job-actions"><a href="${f.form_url}" target="_blank" class="btn-glass btn-sm">Preview →</a><button class="btn-glass btn-sm btn-danger" onclick="deleteForm(${f.id})">🗑 Delete</button></div></div>`; }).join('')
+          ? forms.map(f => { const j = jobs.find(x => x.id === f.job_id), c = cos.find(x => x.id === f.company_id); return `<div class="job-card"><div class="job-company">${c?.name || '—'}</div><div class="job-title">📝 ${j?.title || 'Job'} — Interview Form</div><div class="job-desc">${f.note || ''}</div><div class="job-actions"><a href="${f.form_url}" target="_blank" class="btn-glass btn-sm">Preview →</a><button class="btn-accent btn-sm" onclick="downloadFormReport(${f.id}, '${(j?.title||'report').replace(/'/g,'')}')" title="Download Excel report of applicants">📥 Download Report</button><button class="btn-glass btn-sm btn-danger" onclick="deleteForm(${f.id})">🗑 Delete</button></div></div>`; }).join('')
           : '<div style="text-align:center;padding:40px;color:var(--text-3);">No interview forms yet.</div>';
       } catch { toast('Failed to load forms.', 'error'); }
     }
@@ -1902,6 +2003,14 @@
 
     async function deleteForm(id) {
       try { await Admin.deleteForm(id); toast('Form deleted.', 'error'); renderAdminInterviewForms(); } catch (err) { toast(err.message, 'error'); }
+    }
+
+    async function downloadFormReport(formId, jobTitle) {
+      try {
+        toast('Generating report…', 'info');
+        await Admin.downloadReport(formId, jobTitle);
+        toast('Report downloaded! 📊', 'success');
+      } catch (err) { toast(err.message || 'Failed to download report.', 'error'); }
     }
 
     /* ── ADMIN: SCHOLARSHIPS ────────────────────────────────── */

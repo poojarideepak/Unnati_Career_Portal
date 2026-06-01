@@ -18,6 +18,7 @@ class Student(Base):
     resume     = Column(String(200))
     batch      = Column(Integer, nullable=False)
     is_placed  = Column(Boolean, default=False)
+    profile_photo = Column(String(200)) # Store URL or path
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     applications  = relationship("Application", back_populates="student", cascade="all,delete-orphan")

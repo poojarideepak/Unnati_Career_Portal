@@ -262,6 +262,8 @@ input, textarea, select { font: inherit; color: inherit; background: none; borde
 .modal-overlay.active { opacity: 1; pointer-events: all; }
 .modal-box {
   width: 100%; max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
   background: rgba(10,12,22,0.85);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);

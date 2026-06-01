@@ -8,7 +8,22 @@ import shutil, os, uuid
 
 router = APIRouter()
 RESUME_DIR = "uploads/resumes"
+PHOTO_DIR = "uploads/photos"
 os.makedirs(RESUME_DIR, exist_ok=True)
+os.makedirs(PHOTO_DIR, exist_ok=True)
+
+@router.post("/me/photo", response_model=schemas.MsgRes)
+def upload_photo(file: UploadFile = File(...), current=Depends(require_student), db: Session = Depends(get_db)):
+    if not file.filename.lower().endswith((".jpg", ".jpeg", ".png")):
+        raise HTTPException(status_code=400, detail="Only JPG and PNG files allowed.")
+    s = current["user"]
+    ext = file.filename.split(".")[-1]
+    filename = f"{s.roll_no}_{uuid.uuid4().hex[:8]}.{ext}"
+    with open(os.path.join(PHOTO_DIR, filename), "wb") as buf:
+        shutil.copyfileobj(file.file, buf)
+    s.profile_photo = filename
+    db.commit()
+    return {"message": f"Photo uploaded: {filename}"}
 
 @router.get("/me", response_model=schemas.StudentOut)
 def get_me(current=Depends(require_student)):
